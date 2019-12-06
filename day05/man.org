@@ -1,0 +1,4 @@
+- low 2 digits are opcode
+- high 3 digits are addressing mode by with first parameter starting on the right
+- 0 is position mode
+- 1 is immediate mode

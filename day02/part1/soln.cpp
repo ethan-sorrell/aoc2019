@@ -17,7 +17,7 @@ int main()
     }
     record.back().pop_back();
 
-    // "Restore gravity assist program"
+    // "Restore program"
     record[1] = "12";
     record[2] = "2";
 
