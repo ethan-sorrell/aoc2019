@@ -1,7 +1,7 @@
 #lang racket
 (require racket/format)
 
-(define (get-param instr num pc tokens)
+(define (param-value instr num pc tokens)
   (let* ([param (vector-ref tokens (+ pc num))]
          [param-mode (remainder (quotient instr (expt 10 (add1 num))) 10)])
     (cond
@@ -16,26 +16,27 @@
          [instr (vector-ref tokens pc)]
          [op (remainder instr 100)])
     (cond
-      [(= op 1)
-       (let ([param1 (get-param instr 1 pc tokens)]
-             [param2 (get-param instr 2 pc tokens)]
+      [(= op 1) ;; add
+       (let ([param1 (param-value instr 1 pc tokens)]
+             [param2 (param-value instr 2 pc tokens)]
              [param3 (vector-ref tokens (+ pc 3))])
          (vector-set! tokens param3 (+ param1 param2))
          (vector (+ pc 4) tokens))]
-      [(= op 2)
-       (let ([param1 (get-param instr 1 pc tokens)]
-             [param2 (get-param instr 2 pc tokens)]
+      [(= op 2) ;; multiply
+       (let ([param1 (param-value instr 1 pc tokens)]
+             [param2 (param-value instr 2 pc tokens)]
              [param3 (vector-ref tokens (+ pc 3))])
          (vector-set! tokens param3 (* param1 param2))
          (vector (+ pc 4) tokens))]
-      [(= op 3)
+      [(= op 3) ;; read from input
        (begin
          (vector-set! tokens (vector-ref tokens (add1 pc)) 1)
          (vector (+ pc 2) tokens))]
-      [(= op 4) (begin
-                  (println (get-param instr 1 pc tokens))
-                  (vector (+ pc 2) tokens))]
-      [(= op 99) tokens]
+      [(= op 4) ;; write to output
+       (begin
+         (println (param-value instr 1 pc tokens))
+         (vector (+ pc 2) tokens))]
+      [(= op 99) tokens] ;; end program
       [else (begin (println (~a "Error Unknown Op " op
                                 " pc " pc)))])))
 
