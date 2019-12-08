@@ -1,4 +1,0 @@
-* Day 5
-Converting everything between strings and characters and numbers was not ideal.
-Should have converted everything to numbers at the beginning, used splitDigits function
-from previous day when applicable, then converted back to string at the end.
