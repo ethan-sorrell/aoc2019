@@ -1,5 +1,4 @@
 #lang racket
-(require racket/pretty)
 
 (struct supply (type multi) #:transparent)
 
@@ -52,8 +51,27 @@
                             prev-ore)))
        (values (+ add-ore acc-ore) new-surplus))]))
 
+
 (define lines (file->lines "input.txt"))
 (define grammar (parse-grammar lines))
-(define ans (car (walk-material grammar (supply "FUEL" 1))))
 
-(println ans)
+(define (fuel->ore n)
+  (car (walk-material grammar (supply "FUEL" n))))
+
+(define (binary-search lo hi func)
+  (define mid (quotient (+ lo hi) 2))
+  (cond
+    [(func mid) (binary-search lo (- mid 1) func)]
+    [else
+     (if (func (add1 mid))
+         mid
+         (binary-search (+ mid 1) hi func))]))
+
+(define (solve1) (fuel->ore 1))
+(define (solve2)
+  (define cargo 1000000000000)
+  (define (test-func n) (< cargo (fuel->ore n)))
+  (binary-search 1 cargo test-func))
+
+(println (solve1))
+(println (solve2))
