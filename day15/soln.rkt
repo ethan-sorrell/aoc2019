@@ -10,39 +10,38 @@
     [else (run-until-output (run-instr state))]))
 
 (define (translate-direction char)
-  (cond [(equal? char #\n) 1]
-        [(equal? char #\s) 2]
-        [(equal? char #\w) 3]
-        [(equal? char #\e) 4]))
+  (case char
+    [(#\n) 1]
+    [(#\s) 2]
+    [(#\w) 3]
+    [(#\e) 4]))
 
 (define (update-board board direction [obstacle? 0])
   (define old-pos (hash-ref board "bot"))
   (define new-pos
-    (cond
-      [(equal? direction #\x) old-pos]
-      [(equal? direction #\n)
-       (cons (car old-pos) (add1 (cdr old-pos)))]
-      [(equal? direction #\s)
-       (cons (car old-pos) (sub1 (cdr old-pos)))]
-      [(equal? direction #\e)
-       (cons (add1 (car old-pos)) (cdr old-pos))]
-      [(equal? direction #\w)
-       (cons (sub1 (car old-pos)) (cdr old-pos))]))
+    (case direction
+      [(#\x) old-pos]
+      [(#\n) (cons (car old-pos) (add1 (cdr old-pos)))]
+      [(#\s) (cons (car old-pos) (sub1 (cdr old-pos)))]
+      [(#\e) (cons (add1 (car old-pos)) (cdr old-pos))]
+      [(#\w) (cons (sub1 (car old-pos)) (cdr old-pos))]))
   (if (= 0 obstacle?)
       (let ([new-board (hash-set board "bot" new-pos)])
         (hash-set new-board new-pos #\.))
       (hash-set board new-pos #\#)))
 
+;; (define (decide-direction board direction)
+;;   (case (random 4)
+;;     [(0) #\n]
+;;     [(1) #\s]
+;;     [(2) #\e]
+;;     [(3) #\w]))
+
 (define (decide-direction board direction)
-  (define k (random 4))
-  (cond
-    [(= k 0) #\n]
-    [(= k 1) #\s]
-    [(= k 2) #\e]
-    [(= k 3) #\w]))
+  (list-ref (list #\n #\s #\e #\w) (random 4)))
 
 ;; TODO: decide on a navigation strategy
-(define (find-oxsys state [board (hash "bot" (cons 0 0))] [direction #\x] [output 1])
+(define (find-oxsys state [board (hash "bot" (cons 0 0))] [direction #\x] [output 0])
   (cond
     [(= output 2) (update-board board direction)]                ;; done
     [(= output 1)                       ;; we can continue
