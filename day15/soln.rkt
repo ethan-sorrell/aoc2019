@@ -30,27 +30,30 @@
         (hash-set new-board new-pos #\.))
       (hash-set board new-pos #\#)))
 
-;; (define (decide-direction board direction)
-;;   (case (random 4)
-;;     [(0) #\n]
-;;     [(1) #\s]
-;;     [(2) #\e]
-;;     [(3) #\w]))
-
-(define (decide-direction board direction)
-  (list-ref (list #\n #\s #\e #\w) (random 4)))
+(define (decide-direction direction obstacle?)
+  (define dirs (list #\w #\n #\e #\s #\w #\n))
+  (define index
+    (case direction
+      [(#\n) 1]
+      [(#\e) 2]
+      [(#\s) 3]
+      [(#\w) 4]
+      [(#\x) 1]))
+  (if obstacle?
+      (list-ref dirs (add1 index))
+      (list-ref dirs (sub1 index))))
 
 ;; TODO: decide on a navigation strategy
 (define (find-oxsys state [board (hash "bot" (cons 0 0))] [direction #\x] [output 0])
   (cond
     [(= output 2) (update-board board direction)]                ;; done
     [(= output 1)                       ;; we can continue
-     (define new-direction (decide-direction board direction))
+     (define new-direction (decide-direction direction #f))
      (match-define (cons new-output new-state)
        (run-until-output (change-input state (translate-direction new-direction))))
      (find-oxsys new-state (update-board board direction) new-direction new-output)]
     [(= output 0)                       ;; we hit a wall
-     (define new-direction (decide-direction board direction))
+     (define new-direction (decide-direction direction #t))
      (match-define (cons new-output new-state)
        (run-until-output (change-input state (translate-direction new-direction))))
      (find-oxsys new-state
