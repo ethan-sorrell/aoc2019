@@ -1,0 +1,12 @@
+- each number composed of single digits
+- perform dot-product with a repeating pattern vector
+- keep only the 1s digits of the result (least significant digit)
+
+- pattern:
+  - base pattern is 0 1 0 -1
+  - repeat each value in base pattern number of times equal to position in output list
+  - e.g 0 0 1 1 0 0 -1 -1
+  - then apply offset list left by one (remove first element)
+  - e.g. 0 1 1 0 0 -1 -1
+
+
