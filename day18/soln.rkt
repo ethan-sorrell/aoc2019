@@ -1,6 +1,6 @@
 #lang racket
 
-(define input (file->lines "test_input2.txt"))
+(define input (file->lines "input.txt"))
 
 (define (parse-grid input)
  (for/fold ([item-locs (hash)]
@@ -42,12 +42,12 @@
          [else
           (define new-keys-required
             (if (char-upper-case? (hash-ref loc-items point #\a))
-                (cons (char-downcase (hash-ref loc-items point)) keys-required)
+                (set-add keys-required (char-downcase (hash-ref loc-items point)))
                 keys-required))
           (bfs (append (rest queue)
                        (adjacent traversable point distance new-keys-required))
                (hash-set result-table point (cons distance new-keys-required)))])]))
-  (define distances (bfs (list (list from 0 empty)) (hash)))
+  (define distances (bfs (list (list from 0 (set))) (hash)))
   (for/hash ([(point distance) (in-hash distances)]
              #:when (not (char-upper-case? (hash-ref loc-items point #\A))))
     (values (hash-ref loc-items point) distance)))
@@ -63,27 +63,6 @@
                          (not (equal? from to))))
     (hash-set graph (cons from to) 1)))
 
-;; find minimum spanning tree
-#; (define (mst graph-nodes)
-  (define keys-required
-    (list->set (hash-keys (hash-remove graph-nodes #\@))))
-  (let loop ((loc #\@)
-             (keys-collected (set #\@))
-             (distance 0))
-    (cond
-      [(subset? keys-required keys-collected) distance]
-      [else
-       (define edges (hash-ref graph-nodes loc))
-       (define accessible-nodes
-         (for/set ([(location value) (in-hash edges)]
-                   #:when (and (not (set-member? keys-collected location))
-                               (subset? (list->set (rest value)) keys-collected)))
-           location))
-       (for/list ([node (in-set accessible-nodes)])
-         (loop node
-               (set-add keys-collected node)
-               (+ distance (first (hash-ref edges node)))))])))
-
 (define (mst graph-nodes)
   (define keys-required
     (list->set (hash-keys (hash-remove graph-nodes #\@))))
@@ -97,23 +76,47 @@
        (define accessible-nodes
          (for/set ([(location value) (in-hash edges)]
                    #:when (and (not (set-member? keys-collected location))
-                               (subset? (list->set (rest value)) keys-collected)))
+                               (subset? (cdr value) keys-collected)))
            location))
        (for/list ([node (in-set accessible-nodes)])
          (loop node
                (set-add keys-collected node)
-               (+ distance (first (hash-ref edges node)))))])))
+               (+ distance (car (hash-ref edges node)))))])))
 
 ;; (create-graph traversable item-locs)
 (define-values (item-locs traversable) (parse-grid input))
 
+(define (dynamic-solution nodes)
+  (define cache (make-hash))
+  (define all-keys (set-remove (list->set (hash-keys nodes)) #\@))
+  (define (collect-keys-distance current-key remaining-keys)
+    ;; any keys other than remaining-keys are assumed to have been collected
+    (cond
+      [(set-empty? remaining-keys) 0]
+      [(hash-ref cache (cons current-key remaining-keys) #f)
+       (hash-ref cache (cons current-key remaining-keys))]
+      [else
+       (define node (hash-ref nodes current-key))
+       (define reachable-keys
+         (for/set ([(key value) (in-hash node)]
+                   #:when (and (set-member? remaining-keys key)
+                               (set-empty? (set-intersect (cdr value) remaining-keys))))
+           key))
+       (define min-distance
+         (for/fold ([result +inf.0])
+                   ([key (in-set reachable-keys)])
+           (min result
+                (+ (car (hash-ref node key))
+                   (collect-keys-distance key (set-remove remaining-keys key))))))
+       (hash-set! cache (cons current-key remaining-keys) min-distance)
+       min-distance]))
+  (collect-keys-distance #\@ all-keys))
 
-(define graph-nodes
+(define nodes
   (for/hash ([(item location) (in-hash item-locs)]
              #:when (not (char-upper-case? item)))
     (values
      item
      (crawl-maze traversable item-locs (hash-ref item-locs item)))))
 
-;; graph-nodes
-;; (time (apply min (flatten (mst graph-nodes))))
+(time (dynamic-solution nodes))
