@@ -31,7 +31,7 @@
     (values val key)))
 
 (define (crawl-maze traversable item-locs from)
-  (define loc-items (hash-remove (hash-swap item-locs) from))
+  (set! item-locs (hash-remove (hash-swap item-locs) from))
   (define (bfs queue result-table)
     (cond
       [(empty? queue) result-table]
@@ -41,16 +41,16 @@
          [(hash-ref result-table point #f) (bfs (rest queue) result-table)]
          [else
           (define new-keys-required
-            (if (char-upper-case? (hash-ref loc-items point #\a))
-                (set-add keys-required (char-downcase (hash-ref loc-items point)))
+            (if (char-upper-case? (hash-ref item-locs point #\a))
+                (set-add keys-required (char-downcase (hash-ref item-locs point)))
                 keys-required))
           (bfs (append (rest queue)
                        (adjacent traversable point distance new-keys-required))
                (hash-set result-table point (cons distance new-keys-required)))])]))
   (define distances (bfs (list (list from 0 (set))) (hash)))
   (for/hash ([(point distance) (in-hash distances)]
-             #:when (not (char-upper-case? (hash-ref loc-items point #\A))))
-    (values (hash-ref loc-items point) distance)))
+             #:when (not (char-upper-case? (hash-ref item-locs point #\A))))
+    (values (hash-ref item-locs point) distance)))
 
 ;; create graph, as hashmap of hashmap of distances
 ;; key -> (key -> (keys-required . distance))
